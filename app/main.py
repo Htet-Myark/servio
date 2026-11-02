@@ -9,7 +9,7 @@ import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import quote, urlencode
+from urllib.parse import quote, urlencode, urlparse
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -148,9 +148,19 @@ def render(request: Request, con, user: dict | None, name: str, **ctx):
     return templates.TemplateResponse(request, name, ctx)
 
 
+def local_url(url: str) -> str:
+    """Return url if it is a same-site path, else "/" (blocks open redirects)."""
+    url = url.replace("\\", "/")  # browsers treat "\" like "/"
+    parsed = urlparse(url)
+    if (not url.startswith("/") or url.startswith("//") or parsed.scheme or parsed.netloc
+            or any(c.isspace() or ord(c) < 32 for c in url)):
+        return "/"
+    return url
+
+
 def done(con, url: str) -> RedirectResponse:
     con.commit()  # commit before the browser follows the redirect
-    return RedirectResponse(url, status_code=303)
+    return RedirectResponse(local_url(url), status_code=303)
 
 
 def check_type(rtype: str) -> dict:
@@ -183,9 +193,7 @@ def login_page(request: Request, next: str = "/", con=Depends(get_con)):
 @app.post("/login")
 async def login(request: Request, con=Depends(get_con)):
     form = await request.form()
-    target = str(form.get("next") or "/")
-    if not target.startswith("/") or target.startswith("//"):
-        target = "/"
+    target = local_url(str(form.get("next") or "/"))
     row = con.execute("SELECT * FROM users WHERE username = ? AND active = 1",
                       (str(form.get("username", "")).strip().lower(),)).fetchone()
     if not row or not verify_password(str(form.get("password", "")), row["password_hash"]):
@@ -545,9 +553,9 @@ async def kb_update(request: Request, number: str, user=Depends(agent_user),
 def search(request: Request, q: str = "", user=Depends(agent_user), con=Depends(get_con)):
     q = q.strip()
     if re.fullmatch(r"(?i)(INC|REQ|CHG|PRB)\d{7}", q) and services.get_record_by_number(con, q):
-        return RedirectResponse(f"/r/{q.upper()}", 303)
+        return RedirectResponse(local_url(f"/r/{q.upper()}"), 303)
     if re.fullmatch(r"(?i)KB\d{7}", q):
-        return RedirectResponse(f"/kb/{q.upper()}", 303)
+        return RedirectResponse(local_url(f"/kb/{q.upper()}"), 303)
     rows = list_query(con, user, None, {"q": q, "active": "0"}, limit=50)[0] if q else []
     return render(request, con, user, "search.html", q=q, rows=rows,
                   articles=kb_search(con, q) if q else [])
