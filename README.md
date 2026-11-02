@@ -31,6 +31,20 @@ Change the demo passwords if anyone else can reach the app.
 Tests: `.venv\Scripts\python -m pytest -q`. They run in a separate `servio_test` schema
 (wiped on every test) on `TEST_DATABASE_URL`, or on `DATABASE_URL` if that isn't set.
 
+### Deploy on Vercel
+
+Live demo: https://servio-snowy.vercel.app (open demo: the logins above work, data may be reset).
+
+`vercel.json` pins the functions to Tokyo (`hnd1`), next to the Supabase database. Set two
+environment variables in the Vercel project:
+
+- `DATABASE_URL`: the Supabase **transaction pooler** string (port 6543). Vercel can't reach
+  Supabase's IPv6-only direct host.
+- `SERVIO_SECRET`: a long random string that signs login cookies (`python -c "import secrets;
+  print(secrets.token_hex(32))"`).
+
+Then `vercel deploy --prod`. `.vercelignore` keeps `.env` and other local files out of uploads.
+
 ## What's in it
 
 **Agent workspace** (`/dashboard`)

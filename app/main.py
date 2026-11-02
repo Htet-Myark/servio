@@ -25,9 +25,14 @@ from .services import ValidationError
 BASE = Path(__file__).resolve().parent
 
 
+ON_VERCEL = bool(os.environ.get("VERCEL"))
+
+
 def _secret_key() -> str:
     if key := os.environ.get("SERVIO_SECRET"):
         return key
+    if ON_VERCEL:  # read-only filesystem, and every instance must share one key
+        raise RuntimeError("Set the SERVIO_SECRET environment variable in Vercel.")
     path = db.ROOT / ".servio_secret"
     if not path.exists():
         path.write_text(secrets.token_hex(32))
@@ -43,7 +48,7 @@ async def lifespan(_app):
 
 app = FastAPI(title="Servio", lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=_secret_key(), same_site="lax",
-                   max_age=60 * 60 * 12)
+                   max_age=60 * 60 * 12, https_only=ON_VERCEL)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
 

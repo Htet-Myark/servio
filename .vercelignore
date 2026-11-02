@@ -1,0 +1,10 @@
+# Never upload secrets or local-only files to Vercel.
+.env
+.env.*
+!.env.example
+.servio_secret
+.venv/
+__pycache__/
+.pytest_cache/
+tests/
+*.db
