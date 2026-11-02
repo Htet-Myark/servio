@@ -1,0 +1,45 @@
+{% macro priority(p) -%}
+  {% if p %}<span class="badge p{{ p }}">{{ PRIORITY[p] }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro state(s) -%}
+  <span class="badge state state-{{ s|slug }}">{{ s }}</span>
+{%- endmacro %}
+
+{% macro sla(rec) -%}
+  {% set info = sla_info(rec) %}
+  {% if info %}<span class="sla sla-{{ info.status }}" title="Due {{ rec.sla_due|dt }}">{{ info.label }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro field(f, shown, choices) -%}
+  {% set value = shown[f.name] %}
+  <label class="field{% if f.wide %} wide{% endif %}">
+    <span>{{ f.label }}</span>
+    {% if f.widget == "readonly" %}
+      <input type="text" value="{{ value or '' }}" readonly>
+    {% elif f.widget == "priority" %}
+      <input type="text" id="priority-display" value="{{ PRIORITY.get(value|int if value else 0, '') }}" readonly>
+    {% elif f.widget == "textarea" %}
+      <textarea name="{{ f.name }}" rows="{{ 5 if f.name == 'description' else 3 }}">{{ value or '' }}</textarea>
+    {% elif f.widget == "datetime" %}
+      <input type="datetime-local" name="{{ f.name }}" value="{{ value|dtlocal }}">
+    {% elif f.widget == "select" %}
+      <select name="{{ f.name }}" {% if f.name in ('impact', 'urgency') %}data-priority-input{% endif %}>
+        {% if f.name not in ('state', 'impact', 'urgency') %}<option value="">-- None --</option>{% endif %}
+        {% for v, label in choices[f.choices] %}
+          <option value="{{ v }}" {% if value is not none and v|string == value|string %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    {% else %}
+      <input type="text" name="{{ f.name }}" value="{{ value or '' }}" {% if f.name == 'short_description' %}required{% endif %}>
+    {% endif %}
+  </label>
+{%- endmacro %}
+
+{% macro flashes_list(flashes) -%}
+  {% for m in flashes %}<div class="flash flash-{{ m.kind }}">{{ m.text }}</div>{% endfor %}
+{%- endmacro %}
+
+{% macro errors_list(errors) -%}
+  {% if errors %}<div class="flash flash-error">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+{%- endmacro %}

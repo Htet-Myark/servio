@@ -1,0 +1,29 @@
+{% from "_macros.html" import flashes_list %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Help{% endblock %} · Servio</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="portal">
+  <header class="portal-nav">
+    <a class="brand" href="/portal"><span class="logo">S</span> Servio <small>Help Center</small></a>
+    <nav>
+      <a href="/portal/issue">Get help</a>
+      <a href="/portal/catalog">Request something</a>
+      <a href="/portal/kb">Knowledge</a>
+      <a href="/portal/tickets">My tickets</a>
+      <a href="/approvals">Approvals{% if pending_approvals %} <span class="count">{{ pending_approvals }}</span>{% endif %}</a>
+      {% if user.role != 'requester' %}<a href="/dashboard" class="ws-link">Agent workspace →</a>{% endif %}
+    </nav>
+    <div class="userbox"><span class="avatar">{{ user.name[:1] }}</span>{{ user.name }} <a href="/logout" class="muted">Log out</a></div>
+  </header>
+  <main class="portal-content">
+    {{ flashes_list(flashes) }}
+    {% block content %}{% endblock %}
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

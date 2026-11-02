@@ -1,0 +1,46 @@
+{% extends "portal/base.html" %}
+{% from "_macros.html" import state %}
+{% block title %}{{ rec.number }}{% endblock %}
+{% block content %}
+<div class="narrow">
+  <a href="/portal/tickets" class="muted">← My tickets</a>
+  <h1>{{ rec.short_description }}</h1>
+  <p class="muted">{{ rec.number }} · {{ cfg.label }} · opened {{ rec.opened_at|dt }}</p>
+
+  <section class="panel status-strip">
+    <div><small class="muted">Status</small>{{ state(rec.state) }}</div>
+    {% if rec.approval != 'not requested' %}<div><small class="muted">Approval</small><span class="approval approval-{{ rec.approval|slug }}">{{ rec.approval|title }}</span></div>{% endif %}
+    <div><small class="muted">Assigned to</small>{{ assignee or 'Not yet assigned' }}</div>
+    {% if user.role != 'requester' %}<div><a class="btn" href="/r/{{ rec.number }}">Open in workspace</a></div>{% endif %}
+  </section>
+
+  {% if rec.type == 'incident' and rec.state == 'Resolved' and rec.caller_id == user.id %}
+    <section class="panel resolved-box">
+      <strong>We think this is fixed.</strong>
+      {% if rec.resolution_notes %}<div class="pre">{{ rec.resolution_notes }}</div>{% endif %}
+      <form method="post" action="/portal/ticket/{{ rec.number }}/close"><button class="btn primary">Yes, close it</button></form>
+      <small class="muted">Still broken? Reply below and the ticket reopens.</small>
+    </section>
+  {% endif %}
+
+  {% if rec.description %}<section class="panel"><h2>Details</h2><div class="pre">{{ rec.description }}</div></section>{% endif %}
+
+  <section class="panel">
+    <h2>Conversation</h2>
+    {% if rec.state not in cfg.closed or rec.state == 'Resolved' %}
+    <form method="post" action="/portal/ticket/{{ rec.number }}/comment" class="composer">
+      <textarea name="body" rows="3" placeholder="Add a reply…" required></textarea>
+      <button class="btn primary">Send</button>
+    </form>
+    {% endif %}
+    <ol class="stream">
+      {% for j in journal %}
+        <li class="entry entry-comment {{ 'mine' if j.author_id == user.id }}">
+          <div class="entry-head"><strong>{{ j.author }}</strong> <span class="muted">{{ j.created_at|dt }}</span></div>
+          <div class="entry-body">{{ j.body }}</div>
+        </li>
+      {% else %}<p class="muted">No messages yet.</p>{% endfor %}
+    </ol>
+  </section>
+</div>
+{% endblock %}

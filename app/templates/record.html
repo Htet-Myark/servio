@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% from "_macros.html" import priority, state, field, errors_list %}
+{% block title %}{{ rec.number }}{% endblock %}
+{% block content %}
+<div class="page-head record-head">
+  <div>
+    <div class="muted">{{ cfg.label }}</div>
+    <h1>{{ rec.number }} {{ state(rec.state) }} {{ priority(rec.priority) }}</h1>
+    <div class="muted">Opened {{ rec.opened_at|dt }} · updated {{ rec.updated_at|ago }}</div>
+  </div>
+  <div class="actions">
+    {% if sla %}
+      <div class="sla-box sla-{{ sla.status }}">
+        <div class="muted">Resolution SLA</div>
+        <strong>{{ sla.label }}</strong>
+        {% if sla.pct is defined %}<div class="sla-track"><span style="width: {{ sla.pct }}%"></span></div>{% endif %}
+      </div>
+    {% endif %}
+    {% if rec.assigned_to_id != user.id %}
+      <form method="post" action="/r/{{ rec.number }}/assign-to-me"><button class="btn">Assign to me</button></form>
+    {% endif %}
+    <a class="btn" href="/portal/ticket/{{ rec.number }}">Portal view</a>
+    <button class="btn primary" form="record-form">Save</button>
+  </div>
+</div>
+
+{{ errors_list(errors) }}
+
+<form method="post" id="record-form" class="record-form">
+  <section class="panel">
+    <div class="form-grid">
+      {% for f in fields %}{{ field(f, shown, choices) }}{% endfor %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Activity</h2>
+    <div class="composer">
+      <div class="tabs" role="tablist">
+        <label><input type="radio" name="journal_kind" value="comment" checked> Additional comment <small>(customer visible)</small></label>
+        <label class="wn"><input type="radio" name="journal_kind" value="work_note"> Work note <small>(internal)</small></label>
+      </div>
+      <textarea name="journal_body" rows="3" placeholder="Write a comment or work note… (posted on Save)"></textarea>
+    </div>
+    <ol class="stream">
+      {% for j in journal %}
+        <li class="entry entry-{{ j.kind }}">
+          <div class="entry-head"><strong>{{ j.author or 'System' }}</strong>
+            <span class="kind">{{ {'comment': 'Comment', 'work_note': 'Work note', 'system': 'Field changes'}[j.kind] }}</span>
+            <span class="muted">{{ j.created_at|dt }}</span></div>
+          <div class="entry-body">{{ j.body }}</div>
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+</form>
+
+{% if approvals %}
+<section class="panel">
+  <h2>Approvals</h2>
+  <table class="list">
+    <thead><tr><th>Approver</th><th>State</th><th>Comments</th><th>Decided</th></tr></thead>
+    <tbody>
+    {% for a in approvals %}
+      <tr><td>{{ a.approver }}</td><td><span class="approval approval-{{ a.state|slug }}">{{ a.state|title }}</span>
+        {% if a.state == 'requested' and a.approver_id == user.id %} · <a href="/approvals">Decide</a>{% endif %}</td>
+        <td>{{ a.comments or '' }}</td><td class="muted">{{ a.decided_at|dt }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if rec.type == 'problem' %}
+<section class="panel">
+  <h2>Related incidents ({{ incidents|length }})</h2>
+  {% if incidents %}
+  <table class="list">
+    <thead><tr><th>Number</th><th>Short description</th><th>Priority</th><th>State</th></tr></thead>
+    <tbody>
+    {% for i in incidents %}
+      <tr data-href="/r/{{ i.number }}"><td><a href="/r/{{ i.number }}">{{ i.number }}</a></td>
+        <td>{{ i.short_description }}</td><td>{{ priority(i.priority) }}</td><td>{{ state(i.state) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">Resolving this problem resolves all of its open incidents.</p>
+  {% else %}<p class="muted">Link incidents to this problem from the incident's Problem field.</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import priority, state %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<h1>Results for “{{ q }}”</h1>
+<section class="panel">
+  <h2>Records ({{ rows|length }})</h2>
+  {% if rows %}
+  <table class="list">
+    <thead><tr><th>Number</th><th>Type</th><th>Short description</th><th>Priority</th><th>State</th><th>Updated</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr data-href="/r/{{ r.number }}"><td><a href="/r/{{ r.number }}">{{ r.number }}</a></td>
+        <td>{{ TYPES[r.type].label }}</td><td>{{ r.short_description }}</td>
+        <td>{{ priority(r.priority) }}</td><td>{{ state(r.state) }}</td><td class="muted">{{ r.updated_at|ago }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">No records found.</p>{% endif %}
+</section>
+<section class="panel">
+  <h2>Knowledge ({{ articles|length }})</h2>
+  {% for a in articles %}<p><a href="/kb/{{ a.number }}">{{ a.number }} · {{ a.title }}</a></p>
+  {% else %}<p class="muted">No articles found.</p>{% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "portal/base.html" %}
+{% from "_macros.html" import state %}
+{% block title %}Help Center{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Hi {{ user.name.split()[0] }}, how can we help?</h1>
+  <form action="/portal/kb" class="hero-search"><input name="q" placeholder="Search for answers, e.g. VPN, password, printer"></form>
+</section>
+
+<div class="tiles">
+  <a class="tile" href="/portal/issue"><span class="tile-icon">🛠️</span><strong>Get help</strong><span>Something is broken or not working</span></a>
+  <a class="tile" href="/portal/catalog"><span class="tile-icon">🛒</span><strong>Request something</strong><span>Hardware, software, access</span></a>
+  <a class="tile" href="/portal/kb"><span class="tile-icon">📚</span><strong>Knowledge</strong><span>How-tos and fixes</span></a>
+  <a class="tile" href="/portal/tickets"><span class="tile-icon">🎫</span><strong>My tickets</strong><span>Track your issues and requests</span></a>
+</div>
+
+<div class="grid-2">
+  <section class="panel">
+    <h2>My open tickets</h2>
+    {% for t in tickets %}
+      <a class="ticket-row" href="/portal/ticket/{{ t.number }}">
+        <span><strong>{{ t.short_description }}</strong><small class="muted">{{ t.number }} · opened {{ t.opened_at|ago }}</small></span>
+        {{ state(t.state) }}</a>
+    {% else %}<p class="muted">You have no open tickets.</p>{% endfor %}
+  </section>
+  <section class="panel">
+    <h2>Popular articles</h2>
+    {% for a in popular %}<a class="ticket-row" href="/portal/kb/{{ a.number }}"><span>{{ a.title }}</span><span class="muted">›</span></a>{% endfor %}
+  </section>
+</div>
+{% endblock %}

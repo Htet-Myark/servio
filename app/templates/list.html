@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "_macros.html" import priority, state, sla %}
+{% block title %}{{ cfg.plural }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ cfg.plural }} <span class="muted">({{ total }})</span></h1>
+  {% if rtype == 'request' %}<a class="btn primary" href="/portal/catalog">+ New request</a>
+  {% else %}<a class="btn primary" href="/new/{{ rtype }}">+ New {{ cfg.label|lower }}</a>{% endif %}
+</div>
+
+<form class="filters" data-autosubmit>
+  <input name="q" placeholder="Filter…" value="{{ params.q or '' }}">
+  <select name="state">
+    <option value="">Any state</option>
+    {% for s in cfg.states %}<option {% if params.state == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+  </select>
+  {% if rtype in ('incident', 'problem') %}
+  <select name="priority">
+    <option value="">Any priority</option>
+    {% for p, label in PRIORITY.items() %}<option value="{{ p }}" {% if params.priority == p|string %}selected{% endif %}>{{ label }}{{ ' or higher' if p > 1 }}</option>{% endfor %}
+  </select>
+  {% endif %}
+  <select name="assigned">
+    {% for v, label in [('', 'Anyone'), ('me', 'Assigned to me'), ('mygroups', 'My groups'),
+                        ('mygroups_unassigned', 'Unassigned in my groups'), ('unassigned', 'Unassigned')] %}
+      <option value="{{ v }}" {% if params.assigned == v %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="active">
+    <option value="1" {% if params.active == '1' %}selected{% endif %}>Active only</option>
+    <option value="0" {% if params.active == '0' %}selected{% endif %}>All</option>
+  </select>
+  {% if params.sla %}<input type="hidden" name="sla" value="{{ params.sla }}"><span class="chip">SLA breached ✕</span>{% endif %}
+  <a href="/list/{{ rtype }}" class="muted">Reset</a>
+</form>
+
+<table class="list">
+  <thead><tr>
+    {% for key, label in columns %}
+      {% set sort_key = 'sla_due' if key == 'sla' else key %}
+      <th>{% if sort_key in ('number', 'priority', 'state', 'updated_at', 'sla_due', 'planned_start', 'short_description') %}
+        {% set next_dir = 'asc' if params.sort == sort_key and params.dir != 'asc' else 'desc' %}
+        <a href="{{ qs(params, sort=sort_key, dir=next_dir, page=None) }}">{{ label }}{% if params.sort == sort_key %} {{ '▲' if params.dir == 'asc' else '▼' }}{% endif %}</a>
+      {% else %}{{ label }}{% endif %}</th>
+    {% endfor %}
+  </tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr data-href="/r/{{ r.number }}">
+      {% for key, label in columns %}
+        <td>
+        {%- if key == 'number' %}<a href="/r/{{ r.number }}">{{ r.number }}</a>
+        {%- elif key == 'priority' %}{{ priority(r.priority) }}
+        {%- elif key == 'state' %}{{ state(r.state) }}
+        {%- elif key == 'sla' %}{{ sla(r) }}
+        {%- elif key == 'updated_at' %}<span class="muted">{{ r.updated_at|ago }}</span>
+        {%- elif key == 'planned_start' %}{{ r.planned_start|dt }}
+        {%- elif key == 'approval' %}<span class="approval approval-{{ r.approval|slug }}">{{ r.approval|title }}</span>
+        {%- else %}{{ r[key] if r[key] is not none else '' }}{% endif -%}
+        </td>
+      {% endfor %}
+    </tr>
+  {% else %}
+    <tr><td colspan="{{ columns|length }}" class="empty">No {{ cfg.plural|lower }} match these filters.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if pages > 1 %}
+<div class="pager">
+  {% for p in range(1, pages + 1) %}
+    <a href="{{ qs(params, page=p) }}" class="{{ 'active' if p == page }}">{{ p }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

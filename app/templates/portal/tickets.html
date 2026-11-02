@@ -1,0 +1,20 @@
+{% extends "portal/base.html" %}
+{% from "_macros.html" import state %}
+{% block title %}My tickets{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>My tickets</h1>
+  <nav class="tabbar">
+    <a href="?show=open" class="{{ 'active' if show == 'open' }}">Open</a>
+    <a href="?show=all" class="{{ 'active' if show != 'open' }}">All</a>
+  </nav>
+</div>
+<section class="panel">
+  {% for t in rows %}
+    <a class="ticket-row" href="/portal/ticket/{{ t.number }}">
+      <span><strong>{{ t.short_description }}</strong>
+        <small class="muted">{{ t.number }} · {{ TYPES[t.type].label }} · opened {{ t.opened_at|dt }}{% if t.assignee_name %} · {{ t.assignee_name }} is on it{% endif %}</small></span>
+      {{ state(t.state) }}</a>
+  {% else %}<p class="muted">No tickets here.</p>{% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit ' ~ article.number if article else 'New article' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Edit ' ~ article.number if article else 'New knowledge article' }}</h1>
+<form method="post" class="panel">
+  <div class="form-grid">
+    <label class="field wide"><span>Title</span><input name="title" required value="{{ article.title if article else '' }}"></label>
+    <label class="field"><span>Category</span>
+      <select name="category">{% for c in categories %}<option {% if article and article.category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+    </label>
+    {% if article %}
+    <label class="field check"><input type="checkbox" name="published" {% if article.published %}checked{% endif %}> Published</label>
+    {% endif %}
+    <label class="field wide"><span>Body <small class="muted">(Markdown: # heading, - list, 1. steps, **bold**, `code`)</small></span>
+      <textarea name="body" rows="16" required>{{ article.body if article else '' }}</textarea></label>
+  </div>
+  <button class="btn primary">{{ 'Save' if article else 'Publish' }}</button>
+</form>
+{% endblock %}

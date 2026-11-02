@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Knowledge{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Knowledge base</h1>
+  <a class="btn primary" href="/kb/new">+ New article</a>
+</div>
+<form class="filters" data-autosubmit>
+  <input name="q" placeholder="Search articles…" value="{{ q }}">
+  <select name="category">
+    <option value="">All categories</option>
+    {% for c in categories %}<option {% if c == category %}selected{% endif %}>{{ c }}</option>{% endfor %}
+  </select>
+</form>
+<table class="list">
+  <thead><tr><th>Number</th><th>Title</th><th>Category</th><th>Views</th><th>Updated</th></tr></thead>
+  <tbody>
+  {% for a in articles %}
+    <tr data-href="/kb/{{ a.number }}"><td><a href="/kb/{{ a.number }}">{{ a.number }}</a></td>
+      <td>{{ a.title }}</td><td>{{ a.category }}</td><td>{{ a.views }}</td><td class="muted">{{ a.updated_at|ago }}</td></tr>
+  {% else %}<tr><td colspan="5" class="empty">No articles found.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

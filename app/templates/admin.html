@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+
+{% macro user_form(u=None) %}
+<form method="post" action="/admin/users" class="form-grid inline-form">
+  {% if u %}<input type="hidden" name="id" value="{{ u.id }}">
+  {% else %}<label class="field"><span>Username</span><input name="username" required></label>{% endif %}
+  <label class="field"><span>Name</span><input name="name" required value="{{ u.name if u else '' }}"></label>
+  <label class="field"><span>Email</span><input name="email" value="{{ u.email if u else '' }}"></label>
+  <label class="field"><span>Role</span><select name="role">
+    {% for r in ['requester', 'agent', 'admin'] %}<option {% if u and u.role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+  </select></label>
+  <label class="field"><span>Manager</span><select name="manager_id"><option value="">-- None --</option>
+    {% for m in users if not u or m.id != u.id %}<option value="{{ m.id }}" {% if u and u.manager_id == m.id %}selected{% endif %}>{{ m.name }}</option>{% endfor %}
+  </select></label>
+  <label class="field"><span>{{ 'New password (optional)' if u else 'Password (default: password)' }}</span><input name="password" type="password"></label>
+  <fieldset class="field wide"><span>Groups</span>
+    <div class="checks">{% for g in groups %}
+      <label><input type="checkbox" name="groups" value="{{ g.id }}" {% if u and g.id in memberships.get(u.id, []) %}checked{% endif %}> {{ g.name }}</label>
+    {% endfor %}</div>
+  </fieldset>
+  {% if u %}<label class="field check"><input type="checkbox" name="active" {% if u.active %}checked{% endif %}> Active</label>{% endif %}
+  <div class="wide"><button class="btn primary">{{ 'Save user' if u else 'Create user' }}</button></div>
+</form>
+{% endmacro %}
+
+{% macro group_form(g=None) %}
+<form method="post" action="/admin/groups" class="form-grid inline-form">
+  {% if g %}<input type="hidden" name="id" value="{{ g.id }}">{% endif %}
+  <label class="field"><span>Name</span><input name="name" required value="{{ g.name if g else '' }}"></label>
+  <label class="field"><span>Manager</span><select name="manager_id"><option value="">-- None --</option>
+    {% for m in users %}<option value="{{ m.id }}" {% if g and g.manager_id == m.id %}selected{% endif %}>{{ m.name }}</option>{% endfor %}
+  </select></label>
+  <label class="field wide"><span>Description</span><input name="description" value="{{ g.description if g and g.description else '' }}"></label>
+  <div class="wide"><button class="btn primary">{{ 'Save group' if g else 'Create group' }}</button>
+    <span class="muted">Add members from the Users tab.</span></div>
+</form>
+{% endmacro %}
+
+{% macro item_form(i=None) %}
+<form method="post" action="/admin/catalog" class="form-grid inline-form">
+  {% if i %}<input type="hidden" name="id" value="{{ i.id }}">{% endif %}
+  <label class="field"><span>Name</span><input name="name" required value="{{ i.name if i else '' }}"></label>
+  <label class="field"><span>Category</span><input name="category" required value="{{ i.category if i else '' }}"></label>
+  <label class="field"><span>Icon (emoji)</span><input name="icon" value="{{ i.icon if i else '📦' }}"></label>
+  <label class="field"><span>Fulfillment group</span><select name="fulfillment_group_id"><option value="">-- None --</option>
+    {% for g in groups %}<option value="{{ g.id }}" {% if i and i.fulfillment_group_id == g.id %}selected{% endif %}>{{ g.name }}</option>{% endfor %}
+  </select></label>
+  <label class="field wide"><span>Description</span><input name="description" value="{{ i.description if i and i.description else '' }}"></label>
+  <label class="field wide"><span>Variables (JSON list of {name, label, type: text|textarea|select, options, required})</span>
+    <textarea name="variables" rows="5" class="mono">{{ i.variables if i else '[]' }}</textarea></label>
+  <label class="field check"><input type="checkbox" name="requires_approval" {% if not i or i.requires_approval %}checked{% endif %}> Requires manager approval</label>
+  <label class="field check"><input type="checkbox" name="active" {% if not i or i.active %}checked{% endif %}> Active</label>
+  <div class="wide"><button class="btn primary">{{ 'Save item' if i else 'Create item' }}</button></div>
+</form>
+{% endmacro %}
+
+{% block content %}
+<h1>Administration</h1>
+<nav class="tabbar">
+  {% for key, label in [('users', 'Users'), ('groups', 'Groups'), ('catalog', 'Service catalog')] %}
+    <a href="/admin?tab={{ key }}" class="{{ 'active' if tab == key }}">{{ label }}</a>
+  {% endfor %}
+</nav>
+
+{% if tab == 'users' %}
+  <details class="panel"><summary class="btn primary">+ New user</summary>{{ user_form() }}</details>
+  {% for u in users %}
+    <details class="panel row-edit">
+      <summary><strong>{{ u.name }}</strong> <span class="muted">@{{ u.username }}</span>
+        <span class="chip">{{ u.role }}</span>{% if not u.active %}<span class="chip off">inactive</span>{% endif %}
+        {% if u.manager_name %}<span class="muted">reports to {{ u.manager_name }}</span>{% endif %}</summary>
+      {{ user_form(u) }}
+    </details>
+  {% endfor %}
+{% elif tab == 'groups' %}
+  <details class="panel"><summary class="btn primary">+ New group</summary>{{ group_form() }}</details>
+  {% for g in groups %}
+    <details class="panel row-edit">
+      <summary><strong>{{ g.name }}</strong> <span class="muted">{{ g.members or 'No members' }}</span></summary>
+      {{ group_form(g) }}
+    </details>
+  {% endfor %}
+{% else %}
+  <details class="panel"><summary class="btn primary">+ New catalog item</summary>{{ item_form() }}</details>
+  {% for i in items %}
+    <details class="panel row-edit">
+      <summary>{{ i.icon }} <strong>{{ i.name }}</strong> <span class="muted">{{ i.category }} → {{ i.group_name or 'no group' }}</span>
+        {% if i.requires_approval %}<span class="chip">approval</span>{% endif %}{% if not i.active %}<span class="chip off">inactive</span>{% endif %}</summary>
+      {{ item_form(i) }}
+    </details>
+  {% endfor %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "portal/base.html" %}
+{% from "_macros.html" import errors_list %}
+{% block title %}{{ item.name }}{% endblock %}
+{% block content %}
+<div class="narrow">
+  <a href="/portal/catalog" class="muted">← Catalog</a>
+  <h1>{{ item.icon }} {{ item.name }}</h1>
+  <p class="muted">{{ item.description }}</p>
+  {{ errors_list(errors) }}
+  <form method="post" class="panel">
+    {% for v in variables %}
+      <label class="field"><span>{{ v.label }}{% if v.required %} *{% endif %}</span>
+        {% if v.type == 'select' %}
+          <select name="{{ v.name }}" {% if v.required %}required{% endif %}>
+            <option value="">-- Choose --</option>
+            {% for o in v.options %}<option {% if form[v.name] == o %}selected{% endif %}>{{ o }}</option>{% endfor %}
+          </select>
+        {% elif v.type == 'textarea' %}
+          <textarea name="{{ v.name }}" rows="4" {% if v.required %}required{% endif %}>{{ form[v.name] or '' }}</textarea>
+        {% else %}
+          <input name="{{ v.name }}" value="{{ form[v.name] or '' }}" {% if v.required %}required{% endif %}>
+        {% endif %}
+      </label>
+    {% endfor %}
+    <button class="btn primary">{{ 'Submit for approval' if item.requires_approval else 'Submit request' }}</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_macros.html" import priority, state, sla %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Good to see you, {{ user.name.split()[0] }}</h1>
+
+<div class="cards">
+  {% for label, n, href in cards %}
+    <a class="card stat" href="{{ href }}"><span class="num">{{ n }}</span><span>{{ label }}</span></a>
+  {% endfor %}
+  <a class="card stat" href="/approvals"><span class="num">{{ pending_approvals }}</span><span>Waiting on my approval</span></a>
+</div>
+
+<div class="grid-3">
+  <section class="panel">
+    <h2>Open incidents by priority</h2>
+    {% set top = (by_priority.values()|max) or 1 %}
+    {% for p, n in by_priority.items() %}
+      <a class="hbar" href="/list/incident?priority={{ p }}">
+        <span class="hbar-label">{{ PRIORITY[p] }}</span>
+        <span class="hbar-track"><span class="hbar-fill p{{ p }}" style="width: {{ (100 * n / top)|round }}%"></span></span>
+        <span class="hbar-num">{{ n }}</span>
+      </a>
+    {% endfor %}
+  </section>
+  <section class="panel">
+    <h2>Open work by group</h2>
+    {% set top = (by_group|map(attribute=1)|max) if by_group else 1 %}
+    {% for name, n in by_group %}
+      <div class="hbar">
+        <span class="hbar-label">{{ name }}</span>
+        <span class="hbar-track"><span class="hbar-fill" style="width: {{ (100 * n / top)|round }}%"></span></span>
+        <span class="hbar-num">{{ n }}</span>
+      </div>
+    {% endfor %}
+  </section>
+  <section class="panel">
+    <h2>Incidents opened, last 7 days</h2>
+    {% set top = (days|map(attribute=1)|max) or 1 %}
+    <div class="vbars">
+      {% for label, n in days %}
+        <div class="vbar"><span class="vbar-num">{{ n }}</span>
+          <span class="vbar-fill" style="height: {{ (100 * n / top)|round }}%"></span>
+          <span class="vbar-label">{{ label }}</span></div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<section class="panel">
+  <h2>My work</h2>
+  {% if my_work %}
+  <table class="list">
+    <thead><tr><th>Number</th><th>Short description</th><th>Priority</th><th>State</th><th>SLA</th><th>Updated</th></tr></thead>
+    <tbody>
+    {% for r in my_work %}
+      <tr data-href="/r/{{ r.number }}">
+        <td><a href="/r/{{ r.number }}">{{ r.number }}</a></td>
+        <td>{{ r.short_description }}</td><td>{{ priority(r.priority) }}</td>
+        <td>{{ state(r.state) }}</td><td>{{ sla(r) }}</td><td class="muted">{{ r.updated_at|ago }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">Nothing assigned to you. Check <a href="/list/incident?assigned=mygroups_unassigned">unassigned work in your groups</a>.</p>{% endif %}
+</section>
+{% endblock %}

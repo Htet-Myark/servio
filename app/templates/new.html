@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, errors_list %}
+{% block title %}New {{ cfg.label|lower }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>New {{ cfg.label|lower }}</h1>
+  <button class="btn primary" form="record-form">Submit</button>
+</div>
+{{ errors_list(errors) }}
+<form method="post" id="record-form">
+  <section class="panel">
+    <div class="form-grid">
+      {% for f in fields if f.name not in ('state', 'resolution_code', 'resolution_notes', 'root_cause') %}
+        {{ field(f, shown, choices) }}
+      {% endfor %}
+    </div>
+    {% if rtype == 'incident' %}<p class="muted">Leave the assignment group empty to route by category.</p>{% endif %}
+    {% if rtype == 'change' %}<p class="muted">Standard changes are pre-approved. Normal and emergency changes go to the Change Advisory Board when moved to <em>Authorize</em>.</p>{% endif %}
+  </section>
+</form>
+{% endblock %}

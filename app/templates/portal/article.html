@@ -1,0 +1,11 @@
+{% extends "portal/base.html" %}
+{% block title %}{{ article.title }}{% endblock %}
+{% block content %}
+<div class="narrow">
+  <a href="/portal/kb" class="muted">← Knowledge</a>
+  <h1>{{ article.title }}</h1>
+  <p class="muted">{{ article.number }} · {{ article.category }} · updated {{ article.updated_at|dt }}</p>
+  <article class="panel article">{{ article.body|md }}</article>
+  <p class="muted">Didn't help? <a href="/portal/issue">Contact the service desk →</a></p>
+</div>
+{% endblock %}

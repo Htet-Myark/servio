@@ -1,0 +1,58 @@
+{% from "_macros.html" import flashes_list %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Workspace{% endblock %} · Servio</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="workspace">
+  <aside class="sidebar">
+    <a class="brand" href="/dashboard"><span class="logo">S</span> Servio</a>
+    <nav>
+      {% set path = request.url.path %}
+      <a href="/dashboard" class="{{ 'active' if path == '/dashboard' }}">📊 Dashboard</a>
+      <div class="nav-label">Service desk</div>
+      {% for key, t in TYPES.items() %}
+        <a href="/list/{{ key }}" class="{{ 'active' if path == '/list/' ~ key }}">
+          {{ {'incident': '🔥', 'request': '📦', 'change': '🔧', 'problem': '🧩'}[key] }} {{ t.plural }}</a>
+      {% endfor %}
+      <a href="/approvals" class="{{ 'active' if path == '/approvals' }}">✅ My approvals
+        {% if pending_approvals %}<span class="count">{{ pending_approvals }}</span>{% endif %}</a>
+      <div class="nav-label">Knowledge</div>
+      <a href="/kb" class="{{ 'active' if path.startswith('/kb') }}">📚 Knowledge base</a>
+      <div class="nav-label">Other</div>
+      <a href="/portal">🏠 Self-service portal</a>
+      {% if user.role == 'admin' %}<a href="/admin" class="{{ 'active' if path == '/admin' }}">⚙️ Admin</a>{% endif %}
+    </nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <form action="/search" class="search">
+        <input name="q" placeholder="Search records or jump to INC0001001…" value="{{ q if q is defined else '' }}">
+      </form>
+      <div class="new-menu">
+        <button type="button" class="btn" data-toggle-menu>+ New</button>
+        <div class="menu" hidden>
+          <a href="/new/incident">Incident</a>
+          <a href="/portal/catalog">Request (catalog)</a>
+          <a href="/new/change">Change</a>
+          <a href="/new/problem">Problem</a>
+          <a href="/kb/new">Knowledge article</a>
+        </div>
+      </div>
+      <div class="userbox">
+        <span class="avatar">{{ user.name[:1] }}</span>
+        <span>{{ user.name }}<small>{{ user.role }}</small></span>
+        <a href="/logout" class="muted">Log out</a>
+      </div>
+    </header>
+    <main class="content">
+      {{ flashes_list(flashes) }}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

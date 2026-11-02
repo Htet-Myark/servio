@@ -1,0 +1,19 @@
+{% extends "portal/base.html" %}
+{% block title %}Knowledge{% endblock %}
+{% block content %}
+<h1>Knowledge</h1>
+<form class="filters" data-autosubmit>
+  <input name="q" placeholder="Search articles…" value="{{ q }}">
+  <select name="category">
+    <option value="">All categories</option>
+    {% for c in categories %}<option {% if c == category %}selected{% endif %}>{{ c }}</option>{% endfor %}
+  </select>
+</form>
+<section class="panel">
+  {% for a in articles %}
+    <a class="ticket-row" href="/portal/kb/{{ a.number }}"><span><strong>{{ a.title }}</strong><small class="muted">{{ a.category }}</small></span><span class="muted">›</span></a>
+  {% else %}
+    <p class="muted">No articles match. <a href="/portal/issue">Ask the service desk instead →</a></p>
+  {% endfor %}
+</section>
+{% endblock %}

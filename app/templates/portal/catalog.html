@@ -1,0 +1,15 @@
+{% extends "portal/base.html" %}
+{% block title %}Request something{% endblock %}
+{% block content %}
+<h1>Service catalog</h1>
+{% for category, group in items|groupby('category') %}
+  <h2 class="section">{{ category }}</h2>
+  <div class="tiles">
+    {% for i in group %}
+      <a class="tile" href="/portal/catalog/{{ i.id }}"><span class="tile-icon">{{ i.icon }}</span>
+        <strong>{{ i.name }}</strong><span>{{ i.description }}</span>
+        {% if i.requires_approval %}<small class="muted">Needs manager approval</small>{% endif %}</a>
+    {% endfor %}
+  </div>
+{% endfor %}
+{% endblock %}

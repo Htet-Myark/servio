@@ -1,0 +1,26 @@
+{% extends "portal/base.html" %}
+{% from "_macros.html" import errors_list %}
+{% block title %}Get help{% endblock %}
+{% block content %}
+<div class="narrow">
+  <h1>Get help</h1>
+  <p class="muted">Tell us what's wrong and we'll route it to the right team.</p>
+  {{ errors_list(errors) }}
+  <form method="post" class="panel">
+    <label class="field"><span>What's the problem?</span>
+      <input name="short_description" required maxlength="160" value="{{ form.short_description or '' }}" placeholder="e.g. Outlook keeps asking for my password"></label>
+    <label class="field"><span>What is it about?</span>
+      <select name="category">{% for c in categories %}<option {% if form.category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></label>
+    <fieldset class="field"><span>How much is it affecting you?</span>
+      <div class="choices">
+        {% for v, label in [('blocked', "I can't work"), ('slowed', 'It slows me down'), ('minor', 'Minor / a question')] %}
+          <label><input type="radio" name="how_bad" value="{{ v }}" {% if form.how_bad == v or (not form.how_bad and v == 'slowed') %}checked{% endif %}> {{ label }}</label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <label class="field"><span>Details</span>
+      <textarea name="description" rows="6" placeholder="What happened, when did it start, any error messages?">{{ form.description or '' }}</textarea></label>
+    <button class="btn primary">Submit</button>
+  </form>
+</div>
+{% endblock %}

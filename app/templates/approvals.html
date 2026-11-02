@@ -1,0 +1,38 @@
+{% extends layout %}
+{% block title %}My approvals{% endblock %}
+{% block content %}
+<h1>My approvals</h1>
+{% set pending = rows|selectattr('state', 'eq', 'requested')|list %}
+{% if not pending %}<p class="muted">Nothing is waiting for your approval. 🎉</p>{% endif %}
+{% for a in pending %}
+  <section class="panel approval-card">
+    <div class="approval-info">
+      <div class="muted">{{ TYPES[a.type].label }} · requested {{ a.created_at|ago }}{% if a.caller_name %} · for {{ a.caller_name }}{% endif %}</div>
+      <h2><a href="{{ '/r/' if user.role != 'requester' else '/portal/ticket/' }}{{ a.number }}">{{ a.number }}</a> {{ a.short_description }}</h2>
+      {% if a.description %}<div class="pre">{{ a.description }}</div>{% endif %}
+    </div>
+    <form method="post" action="/approvals/{{ a.id }}" class="approval-form">
+      <input name="comments" placeholder="Comments (optional)">
+      <button class="btn approve" name="decision" value="approve">Approve</button>
+      <button class="btn reject" name="decision" value="reject">Reject</button>
+    </form>
+  </section>
+{% endfor %}
+
+{% set decided = rows|rejectattr('state', 'eq', 'requested')|list %}
+{% if decided %}
+<section class="panel">
+  <h2>History</h2>
+  <table class="list">
+    <thead><tr><th>Number</th><th>Short description</th><th>Decision</th><th>Comments</th><th>When</th></tr></thead>
+    <tbody>
+    {% for a in decided %}
+      <tr><td>{{ a.number }}</td><td>{{ a.short_description }}</td>
+        <td><span class="approval approval-{{ a.state|slug }}">{{ a.state|title }}</span></td>
+        <td>{{ a.comments or '' }}</td><td class="muted">{{ a.decided_at|dt }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

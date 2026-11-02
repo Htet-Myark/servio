@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Servio</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-page">
+  <form method="post" action="/login" class="login-card">
+    <div class="brand big"><span class="logo">S</span> Servio</div>
+    <p class="muted">IT service management</p>
+    {% if error %}<div class="flash flash-error">{{ error }}</div>{% endif %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <label class="field"><span>Username</span><input name="username" autofocus required></label>
+    <label class="field"><span>Password</span><input name="password" type="password" required></label>
+    <button class="btn primary full">Sign in</button>
+    <details class="demo">
+      <summary>Demo accounts</summary>
+      <table>
+        <tr><td><code>admin</code> / <code>admin</code></td><td>Admin, CAB approver</td></tr>
+        <tr><td><code>alex</code> / <code>password</code></td><td>Agent: Service Desk, Hardware, CAB</td></tr>
+        <tr><td><code>priya</code> / <code>password</code></td><td>Agent: Network, Database</td></tr>
+        <tr><td><code>sam</code> / <code>password</code></td><td>Agent: Application Support</td></tr>
+        <tr><td><code>jamie</code> / <code>password</code></td><td>Employee (manager: Morgan)</td></tr>
+        <tr><td><code>morgan</code> / <code>password</code></td><td>Employee &amp; manager (approves)</td></tr>
+      </table>
+    </details>
+  </form>
+</body>
+</html>
