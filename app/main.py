@@ -46,9 +46,23 @@ async def lifespan(_app):
     db.close_pool()
 
 
+SESSION_MAX_AGE = 60 * 60 * 2  # public demo: log out idle visitors after 2 hours
+
 app = FastAPI(title="Servio", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def no_store_pages(request: Request, call_next):
+    # Pages are per-user (and carry the session cookie), so no CDN or shared browser
+    # cache may keep a copy. Static assets stay cacheable.
+    response = await call_next(request)
+    if not request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "private, no-store"
+    return response
+
+
 app.add_middleware(SessionMiddleware, secret_key=_secret_key(), same_site="lax",
-                   max_age=60 * 60 * 12, https_only=ON_VERCEL)
+                   max_age=SESSION_MAX_AGE, https_only=ON_VERCEL)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
 

@@ -189,3 +189,13 @@ def test_pages_render(client):
         assert r.status_code == 200, (p, r.status_code, r.text[:500])
     assert client.get("/search?q=inc0001001", follow_redirects=False).headers["location"] \
         == "/r/INC0001001"
+
+
+def test_pages_not_cached_and_session_expires_in_two_hours(client):
+    r = client.get("/login")
+    assert r.headers["cache-control"] == "private, no-store"
+    r = login(client, "admin", "admin")
+    assert r.headers["cache-control"] == "private, no-store"
+    assert "Max-Age=7200" in r.headers["set-cookie"]
+    assert client.get("/dashboard").headers["cache-control"] == "private, no-store"
+    assert "no-store" not in client.get("/static/style.css").headers.get("cache-control", "")
